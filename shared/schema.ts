@@ -35,7 +35,7 @@ export const employees = pgTable("employees", {
   department_id: varchar("department_id").references(() => departments.id),
   position: varchar("position", { length: 100 }).notNull(),
   manager_id: varchar("manager_id").references(() => employees.id),
-  joining_date: varchar("joining_date").notNull(),
+  joining_date: timestamp("joining_date").notNull(),
   status: varchar("status", { length: 20 }).default("active"),
   email: varchar("email", { length: 255 }),
   created_at: timestamp("created_at").defaultNow(),
@@ -47,8 +47,8 @@ export const leaveRequests = pgTable("leave_requests", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   employee_id: varchar("employee_id").references(() => employees.id).notNull(),
   leave_type: varchar("leave_type", { length: 20 }).notNull(),
-  from_date: varchar("from_date").notNull(),
-  to_date: varchar("to_date").notNull(),
+  from_date: timestamp("from_date").notNull(),
+  to_date: timestamp("to_date").notNull(),
   reason: text("reason").notNull(),
   status: varchar("status", { length: 20 }).default("pending"),
   days_count: integer("days_count").notNull(),
@@ -73,7 +73,7 @@ export const approvalSteps = pgTable("approval_steps", {
 export const holidays = pgTable("holidays", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: varchar("name", { length: 100 }).notNull(),
-  date: varchar("date").notNull(),
+  date: timestamp("date").notNull(),
   description: text("description"),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
@@ -118,7 +118,7 @@ export const workflowConfigs = pgTable("workflow_configs", {
 export const workflowSteps = pgTable("workflow_steps", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   workflow_config_id: varchar("workflow_config_id").references(() => workflowConfigs.id).notNull(),
-  order: integer("order").notNull(),
+  step_order: integer("step_order").notNull(),
   role: varchar("role", { length: 20 }).notNull(),
   required: boolean("required").default(true),
 });

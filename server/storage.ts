@@ -64,6 +64,19 @@ export interface IStorage {
   getLeavePolicyByType(leaveType: string): Promise<LeavePolicy | undefined>;
   createLeavePolicy(leavePolicy: InsertLeavePolicy): Promise<LeavePolicy>;
   updateLeavePolicy(id: string, leavePolicy: Partial<InsertLeavePolicy>): Promise<LeavePolicy>;
+
+  // Workflow Config operations
+  getAllWorkflowConfigs(): Promise<WorkflowConfig[]>;
+  getWorkflowConfigById(id: string): Promise<WorkflowConfig | undefined>;
+  createWorkflowConfig(workflowConfig: any): Promise<WorkflowConfig>;
+  updateWorkflowConfig(id: string, workflowConfig: any): Promise<WorkflowConfig>;
+  deleteWorkflowConfig(id: string): Promise<void>;
+
+  // Workflow Step operations
+  getWorkflowStepsByConfigId(configId: string): Promise<any[]>;
+  createWorkflowStep(workflowStep: any): Promise<any>;
+  updateWorkflowStep(id: string, workflowStep: any): Promise<any>;
+  deleteWorkflowStep(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -301,6 +314,61 @@ export class DatabaseStorage implements IStorage {
       .where(eq(leavePolicies.id, id))
       .returning();
     return updatedLeavePolicy;
+  }
+
+  // Workflow Config operations
+  async getAllWorkflowConfigs(): Promise<WorkflowConfig[]> {
+    return await db.select().from(workflowConfigs).where(eq(workflowConfigs.is_active, true));
+  }
+
+  async getWorkflowConfigById(id: string): Promise<WorkflowConfig | undefined> {
+    const [workflowConfig] = await db.select().from(workflowConfigs).where(eq(workflowConfigs.id, id));
+    return workflowConfig || undefined;
+  }
+
+  async createWorkflowConfig(workflowConfig: any): Promise<WorkflowConfig> {
+    const [newWorkflowConfig] = await db.insert(workflowConfigs).values(workflowConfig).returning();
+    return newWorkflowConfig;
+  }
+
+  async updateWorkflowConfig(id: string, workflowConfig: any): Promise<WorkflowConfig> {
+    const [updatedWorkflowConfig] = await db
+      .update(workflowConfigs)
+      .set({ ...workflowConfig, updated_at: new Date() })
+      .where(eq(workflowConfigs.id, id))
+      .returning();
+    return updatedWorkflowConfig;
+  }
+
+  async deleteWorkflowConfig(id: string): Promise<void> {
+    await db.delete(workflowConfigs).where(eq(workflowConfigs.id, id));
+  }
+
+  // Workflow Step operations
+  async getWorkflowStepsByConfigId(configId: string): Promise<any[]> {
+    return await db
+      .select()
+      .from(workflowSteps)
+      .where(eq(workflowSteps.workflow_config_id, configId))
+      .orderBy(workflowSteps.step_order);
+  }
+
+  async createWorkflowStep(workflowStep: any): Promise<any> {
+    const [newWorkflowStep] = await db.insert(workflowSteps).values(workflowStep).returning();
+    return newWorkflowStep;
+  }
+
+  async updateWorkflowStep(id: string, workflowStep: any): Promise<any> {
+    const [updatedWorkflowStep] = await db
+      .update(workflowSteps)
+      .set(workflowStep)
+      .where(eq(workflowSteps.id, id))
+      .returning();
+    return updatedWorkflowStep;
+  }
+
+  async deleteWorkflowStep(id: string): Promise<void> {
+    await db.delete(workflowSteps).where(eq(workflowSteps.id, id));
   }
 }
 

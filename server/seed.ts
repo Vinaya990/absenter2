@@ -42,7 +42,7 @@ export async function seedDatabase() {
         employee_id: "EMP001",
         department_id: createdDepartments[1].id, // HR
         position: "System Admin",
-        joining_date: "2024-01-01",
+        joining_date: new Date("2024-01-01"),
         status: "active" as const,
         email: "admin@company.com",
       },
@@ -51,7 +51,7 @@ export async function seedDatabase() {
         employee_id: "EMP002", 
         department_id: createdDepartments[1].id, // HR
         position: "HR Manager",
-        joining_date: "2024-01-15",
+        joining_date: new Date("2024-01-15"),
         status: "active" as const,
         email: "hr@company.com",
       },
@@ -60,7 +60,7 @@ export async function seedDatabase() {
         employee_id: "EMP003",
         department_id: createdDepartments[0].id, // Engineering
         position: "Team Lead",
-        joining_date: "2024-02-01", 
+        joining_date: new Date("2024-02-01"), 
         status: "active" as const,
         email: "manager@company.com",
       },
@@ -69,7 +69,7 @@ export async function seedDatabase() {
         employee_id: "EMP004",
         department_id: createdDepartments[0].id, // Engineering
         position: "Software Developer",
-        joining_date: "2024-02-15",
+        joining_date: new Date("2024-02-15"),
         status: "active" as const,
         email: "employee@company.com",
       },
@@ -191,17 +191,17 @@ export async function seedDatabase() {
     const holidays = [
       {
         name: "New Year's Day",
-        date: "2024-01-01",
+        date: new Date("2024-01-01"),
         description: "New Year Holiday",
       },
       {
         name: "Independence Day",
-        date: "2024-07-04", 
+        date: new Date("2024-07-04"), 
         description: "National Holiday",
       },
       {
         name: "Christmas",
-        date: "2024-12-25",
+        date: new Date("2024-12-25"),
         description: "Christmas Holiday",
       },
     ];

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, UserRole } from '../types';
+import { User } from '../types';
+import { authAPI } from '../api/auth';
 
 interface AuthContextType {
   user: User | null;
@@ -23,59 +24,32 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [userCredentials, setUserCredentials] = useState<Record<string, string>>({});
 
   useEffect(() => {
     // Check for stored user session
     const storedUser = localStorage.getItem('absentra_user');
-    const storedCredentials = localStorage.getItem('absentra_credentials');
-    if (storedUser) {
+    const storedToken = localStorage.getItem('absentra_token');
+    
+    if (storedUser && storedToken) {
       try {
-        setUser(JSON.parse(storedUser));
+        const userData = JSON.parse(storedUser);
+        setUser(userData);
       } catch (error) {
         localStorage.removeItem('absentra_user');
-      }
-    }
-    if (storedCredentials) {
-      try {
-        setUserCredentials(JSON.parse(storedCredentials));
-      } catch (error) {
-        localStorage.removeItem('absentra_credentials');
+        localStorage.removeItem('absentra_token');
       }
     }
     setLoading(false);
   }, []);
-
-  // Initialize default credentials if not exists
-  useEffect(() => {
-    const defaultCredentials = {
-      'admin': 'password',
-      'hr.manager': 'password',
-      'line.manager': 'password',
-      'employee': 'password'
-    };
-    
-    if (Object.keys(userCredentials).length === 0) {
-      setUserCredentials(defaultCredentials);
-      localStorage.setItem('absentra_credentials', JSON.stringify(defaultCredentials));
-    }
-  }, [userCredentials]);
   const login = async (username: string, password: string): Promise<boolean> => {
     setLoading(true);
     try {
-      // Mock authentication - in real app, this would be an API call
-      const mockUsers: User[] = [
-        { id: '1', username: 'admin', employee_id: 'EMP001', role: 'admin', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-        { id: '2', username: 'hr.manager', employee_id: 'EMP002', role: 'hr', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-        { id: '3', username: 'line.manager', employee_id: 'EMP003', role: 'line_manager', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-        { id: '4', username: 'employee', employee_id: 'EMP004', role: 'employee', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-      ];
-
-      const foundUser = mockUsers.find(u => u.username === username && password === userCredentials[username]);
+      const result = await authAPI.login(username, password);
       
-      if (foundUser) {
-        setUser(foundUser);
-        localStorage.setItem('absentra_user', JSON.stringify(foundUser));
+      if (result) {
+        setUser(result.user);
+        localStorage.setItem('absentra_user', JSON.stringify(result.user));
+        localStorage.setItem('absentra_token', result.token);
         return true;
       }
       return false;
@@ -90,19 +64,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (username: string, password: string, employeeId: string): Promise<boolean> => {
     setLoading(true);
     try {
-      // Mock registration - in real app, this would be an API call
-      const newUser: User = {
-        id: Date.now().toString(),
-        username,
-        employee_id: employeeId,
-        role: 'employee',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
+      const result = await authAPI.register(username, password, employeeId);
       
-      setUser(newUser);
-      localStorage.setItem('absentra_user', JSON.stringify(newUser));
-      return true;
+      if (result) {
+        setUser(result.user);
+        localStorage.setItem('absentra_user', JSON.stringify(result.user));
+        localStorage.setItem('absentra_token', result.token);
+        return true;
+      }
+      return false;
     } catch (error) {
       console.error('Registration error:', error);
       return false;
@@ -114,6 +84,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     setUser(null);
     localStorage.removeItem('absentra_user');
+    localStorage.removeItem('absentra_token');
   };
 
   const updateProfile = async (updates: { username?: string; password?: string }): Promise<boolean> => {
@@ -122,31 +93,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setLoading(true);
       
-      // In a real app, this would be an API call
-      // Update user data
-      const updatedUser = {
-        ...user,
-        ...(updates.username && { username: updates.username }),
-        updated_at: new Date().toISOString()
-      };
+      const token = localStorage.getItem('absentra_token') || '';
+      const result = await authAPI.updateProfile(user.id, updates, token);
       
-      setUser(updatedUser);
-      localStorage.setItem('absentra_user', JSON.stringify(updatedUser));
-      
-      // Update password in credentials if provided
-      if (updates.password) {
-        const updatedCredentials = {
-          ...userCredentials,
-          [updatedUser.username]: updates.password
-        };
-        setUserCredentials(updatedCredentials);
-        localStorage.setItem('absentra_credentials', JSON.stringify(updatedCredentials));
+      if (result) {
+        setUser(result);
+        localStorage.setItem('absentra_user', JSON.stringify(result));
+        return true;
       }
       
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      return true;
+      return false;
     } catch (error) {
       console.error('Profile update error:', error);
       return false;
